@@ -10,15 +10,71 @@ Equal <- "+proj=moll +lon_0=0 +x_0=0 +y_0=0 +ellps=WGS84 +units=m +no_defs"
 #Area <- read_csv("Defor Data/uni_id_area.csv")
 
 
-Files <- list.files(path = "Defor Data", pattern = ".csv", recursive = T, full.names = T)
+Files <- list.files(path = "Defor_Data", pattern = ".csv", recursive = T, full.names = T)
 
 Files <- Files[Files != "Defor Data/uni_id_area.csv"]
+Files <- Files[str_detect(Files, "dvc", negate = T)]
 
 Files <- Files[str_detect(Files, "_forest")]
 
-Outputs <- Files %>% str_replace_all("Defor Data/", "Output/") %>% str_replace_all(".csv", ".rds")
+Outputs <- Files %>% str_replace_all("Defor_Data/", "Output/") %>% str_replace_all(".csv", ".rds")
 Folders <- data.frame(Outputs = Outputs) %>% 
   tidyr::separate(Outputs, into = c("V1", "V2", "V3"), sep = "/") %>%
   mutate(Folder1 = V1, Folder2 = paste(V1, V2, sep = "/"), Scenario = str_remove_all(V3, ".rds")) %>% 
   dplyr::select(Folder1, Folder2, Scenario) %>% 
   dplyr::filter(str_detect(Scenario, "_forest"))
+
+for(i in 1:length(Files)){
+  dir.create("Temp")
+  rasterOptions(tmpdir = paste0(getwd(), "/Temp"))
+  
+  Area <- read_csv("Defor_Data/uni_id_area.csv")
+  Temp <- read_csv(Files[i]) %>% 
+    left_join(Area)
+  rm(Area)
+  
+  gc()
+  
+  message("Join with shapefile")
+  
+  ShapeTemp <- read_rds("shape.rds")  %>% 
+    left_join(Temp)
+  rm(Temp)
+  
+  gc()
+  
+  ShapeTemp <- ShapeTemp %>% dplyr::filter_at(vars(contains("for_")), ~!is.na(.x)) %>% mutate_at(vars(contains("for_")), ~round((.x/area)*100))
+  
+  ShapeTemp <- ShapeTemp %>% dplyr::select(contains("for_")) %>% 
+    mutate_if(is.numeric,~case_when(.x >= 100 ~ 100,
+                                    .x <= 0 ~ 0,
+                                    TRUE ~ .x))
+  Cols <- colnames(ShapeTemp)
+  Cols <- Cols[Cols != "geometry"]
+  Years <- Cols %>% str_remove_all("defor_") %>% str_remove_all("for_") %>% as.numeric()
+  
+  Test_DF <- list()
+  
+  dir.create(Folders$Folder1[i])
+  dir.create(Folders$Folder2[i])
+  message("Starting a list")
+  for(j in 1:length(Cols)){
+    Test <-  ShapeTemp %>% fasterize::fasterize(raster = Mold, field = Cols[j])
+    Test <- Test %>% trim()
+    # saveRDS(Test, paste0("Output/flat_1000d_forest_asia/", "for", Years[i], ".rds"))
+    Test_DF[[j]] <- Test %>% 
+      as("SpatialPixelsDataFrame") %>% 
+      as.data.frame()
+    Test_DF[[j]]$Year = NA
+    Test_DF[[j]]$Year = Years[j]
+    # saveRDS(Test_DF,"Output/flat_1000d_forest_asia/for_DF.rds")
+    message(paste(j, "of", length(Cols)))
+    gc()
+  }
+  unlink(paste0(getwd(), "/Temp"), recursive = T)
+  Long_format <- bind_rows(Test_DF) %>% rename(Forest = layer) %>% mutate(Scenario = Folders$Scenario[i])
+  saveRDS(Long_format,Outputs[i])
+  gc()
+  print(paste("Scenario", i, "of" ,length(Files), "ready!", Sys.time()))
+}
+
