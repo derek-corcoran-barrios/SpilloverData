@@ -1,0 +1,4 @@
+outs:
+- md5: 3e092af99886948a29e86d41539c521c
+  size: 201600848
+  path: shape.rds
