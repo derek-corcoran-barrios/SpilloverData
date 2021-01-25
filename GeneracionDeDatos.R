@@ -218,7 +218,7 @@ ID_Table <- Finals %>%
 saveRDS(ID_Table, "ID_Table_Full.rds")
 
 All_Data_Long_ID <- Finals %>%
-  dplyr::select(Forest, Year, Population, Birds, Mammals, Vertebrates, ID) %>% 
+  dplyr::select(Forest, Year, Population, Birds, Mammals, Vertebrates,Scenario, ID) %>% 
   mutate_if(is.numeric, as.integer)
 
 saveRDS(All_Data_Long_ID, "All_Data_Long_ID.rds")
