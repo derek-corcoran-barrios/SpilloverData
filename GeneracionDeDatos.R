@@ -195,7 +195,7 @@ for(i in 1:length(Datas)){
   TempData  <- readRDS(Datas[i])
   TempID <- readRDS(Ids[i])
   Temp <-full_join(TempData, TempID)
-  Finals[[i]] <- Temp %>% select(-ID)
+  Finals[[i]] <- Temp %>% dplyr::select(-ID)
   rm(TempData)
   rm(Temp)
   rm(TempID)
@@ -205,6 +205,20 @@ for(i in 1:length(Datas)){
 
 
 
-Finals <- Finals %>% purrr::reduce(bind_rows)group_by(x, y) %>% 
+Finals <- Finals %>% purrr::reduce(bind_rows) %>% 
+  group_by(x, y) %>% 
   mutate(ID =cur_group_id()) %>% 
   ungroup()
+
+
+ID_Table <- Finals %>% 
+  dplyr::select(ID,x,y) %>% 
+  distinct()
+
+saveRDS(ID_Table, "ID_Table_Full.rds")
+
+All_Data_Long_ID <- Finals %>%
+  dplyr::select(Forest, Year, Population, Birds, Mammals, Vertebrates, ID) %>% 
+  mutate_if(is.numeric, as.integer)
+
+saveRDS(All_Data_Long_ID, "All_Data_Long_ID.rds")
