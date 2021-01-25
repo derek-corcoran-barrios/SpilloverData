@@ -183,8 +183,28 @@ for(i in 1:length(Files)){
 }
 
 
+## Get it all together
+
+Datas <- list.files(path ="Output", pattern = "Data_Complete_ID", full.names = T, recursive = T) 
+
+Ids <- list.files(path ="Output", pattern = "ID_Table", full.names = T, recursive = T) 
+
+Finals <- list()
+
+for(i in 1:length(Datas)){
+  TempData  <- readRDS(Datas[i])
+  TempID <- readRDS(Ids[i])
+  Temp <-full_join(TempData, TempID)
+  Finals[[i]] <- Temp %>% select(-ID)
+  rm(TempData)
+  rm(Temp)
+  rm(TempID)
+  gc()
+  message(i)
+}
 
 
 
-
-
+Finals <- Finals %>% purrr::reduce(bind_rows)group_by(x, y) %>% 
+  mutate(ID =cur_group_id()) %>% 
+  ungroup()
