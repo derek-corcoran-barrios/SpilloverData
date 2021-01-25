@@ -153,10 +153,10 @@ for(i in 1:length(Files)){
     dplyr::select(Forest, Year, Population, ID) %>% 
     mutate_if(is.numeric, as.integer)
   
-  saveRDS(All_Data_Long_ID, paste0(Folders$Folder2[i], "/",Folders$Scenario, "_Data_ID.rds"))
+  saveRDS(All_Data_Long_ID, paste0(Folders$Folder2[i], "/",Folders$Scenario[i], "_Data_ID.rds"))
 
   
-  saveRDS(ID_Table, paste0(Folders$Folder2[i], "/",Folders$Scenario, "_ID_Table.rds"))
+  saveRDS(ID_Table, paste0(Folders$Folder2[i], "/",Folders$Scenario[i], "_ID_Table.rds"))
   
   gc()
   
@@ -177,8 +177,8 @@ for(i in 1:length(Files)){
     mutate(Scenario = Folders$Scenario[i])
   
   
-  saveRDS(All_Temp_DF, paste0(Folders$Folder2[i], "/",Folders$Scenario, "_Data_Complete_ID.rds"))
-  
+  saveRDS(All_Temp_DF, paste0(Folders$Folder2[i], "/",Folders$Scenario[i], "_Data_Complete_ID.rds"))
+  gc()
   print(paste("Scenario", i, "of" ,length(Files), "ready!", Sys.time()))
 }
 
