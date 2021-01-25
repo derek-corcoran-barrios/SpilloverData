@@ -1,7 +1,29 @@
 library(sf)
 library(tidyverse)
 library(raster)
+require("ncdf4")
+library(tidyverse)
 
+dir.create("Temp")
+rasterOptions(tmpdir = paste0(getwd(), "/Temp"))
+
+### Agregar Poblacion
+
+# Coso <- stack("gpw_v4_population_density_adjusted_rev11_2pt5_min.nc")
+# 
+# Coso <- Coso[[1:5]]
+# 
+# Coso <- Coso*area(Coso)
+# 
+# names(Coso) <- paste0("Year", seq(2000, 2020, by = 5))
+# 
+# Coso <- projectRaster(Coso, crs = "+proj=moll +lon_0=0 +x_0=0 +y_0=0 +ellps=WGS84 +units=m +no_defs")
+# 
+# Coso <- readAll(Coso)
+# 
+# saveRDS(Coso, "TotalPoblacional.rds")
+
+Coso <- read_rds("TotalPoblacional.rds")
 
 Mold <- read_rds("Mold.rds")
 
@@ -23,6 +45,7 @@ Folders <- data.frame(Outputs = Outputs) %>%
   mutate(Folder1 = V1, Folder2 = paste(V1, V2, sep = "/"), Scenario = str_remove_all(V3, ".rds")) %>% 
   dplyr::select(Folder1, Folder2, Scenario) %>% 
   dplyr::filter(str_detect(Scenario, "_forest"))
+
 
 for(i in 1:length(Files)){
   dir.create("Temp")
@@ -75,6 +98,45 @@ for(i in 1:length(Files)){
   Long_format <- bind_rows(Test_DF) %>% rename(Forest = layer) %>% mutate(Scenario = Folders$Scenario[i])
   saveRDS(Long_format,Outputs[i])
   gc()
+  TotalPoblacional <- resample(Coso, Test)
+  Temp <- TotalPoblacional[[1]]
+  
+  values(Temp) <- NA
+  
+  NamesLayers <- paste0("Year", 2000:2020)
+  
+  TotalPoblacional <- stack(TotalPoblacional[[1]], Temp, Temp, Temp, Temp,
+                            TotalPoblacional[[2]], Temp, Temp, Temp, Temp,
+                            TotalPoblacional[[3]], Temp, Temp, Temp, Temp,
+                            TotalPoblacional[[4]], Temp, Temp, Temp, Temp,
+                            TotalPoblacional[[5]])
+  
+  names(TotalPoblacional) <- NamesLayers
+  
+  TotalPoblacional <- approxNA(TotalPoblacional)
+  
+  
+  
+  TotalPoblacional_DF <- TotalPoblacional %>% 
+    as("SpatialPixelsDataFrame") %>% 
+    as.data.frame() %>% 
+    pivot_longer(starts_with("Year"), values_to = "Population", names_to = "Year") %>% 
+    mutate(Population = as.integer(round(Population)), Year = as.integer(as.numeric(str_remove_all(Year, "Year"))))
+  
+  
+  
+  All_Data_Long <- Long_format %>% left_join(TotalPoblacional_DF)
+  
+  saveRDS(TotalPoblacional_DF, paste0(Folders$Folder2[i], "/",Folders$Scenario, "_TotalPoblacional_Long.rds"))
+  
+  gc()
+  
   print(paste("Scenario", i, "of" ,length(Files), "ready!", Sys.time()))
 }
+
+
+
+
+
+
 
