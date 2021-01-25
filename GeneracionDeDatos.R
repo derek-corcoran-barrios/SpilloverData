@@ -127,7 +127,25 @@ for(i in 1:length(Files)){
   
   All_Data_Long <- Long_format %>% left_join(TotalPoblacional_DF)
   
+  All_Data_Long_ID <- All_Data_Long %>% 
+    group_by(x, y) %>% 
+    mutate(ID =cur_group_id()) %>% 
+    ungroup()
+  
+  ID_Table <- All_Data_Long_ID %>% 
+    dplyr::select(ID,x,y) %>% 
+    distinct()
+  
+  All_Data_Long_ID <- All_Data_Long_ID %>%
+    dplyr::select(Forest, Year, Population, ID) %>% 
+    mutate_if(is.numeric, as.integer)
+  
   saveRDS(TotalPoblacional_DF, paste0(Folders$Folder2[i], "/",Folders$Scenario, "_TotalPoblacional_Long.rds"))
+  
+  saveRDS(All_Data_Long_ID, paste0(Folders$Folder2[i], "/",Folders$Scenario, "_Data_ID.rds"))
+
+  
+  saveRDS(ID_Table, paste0(Folders$Folder2[i], "/",Folders$Scenario, "__ID_Table.rds"))
   
   gc()
   
