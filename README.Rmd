@@ -12,3 +12,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ## Fishers Alpha
 
 The `Fisher's alpha.R` script generates the `Arlroy_Data.rds` file which has all the data on `r nrow(readRDS("Alroy_Data.rds"))` sites for generating the relationship between Fisher's alpha, Species Richness and Number of individuals.
+
+## Population, diversity and forest proportion
+
+This were calculated using the `GeneracionDeDatos.R` script

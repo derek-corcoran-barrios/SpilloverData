@@ -46,8 +46,20 @@ Folders <- data.frame(Outputs = Outputs) %>%
   dplyr::select(Folder1, Folder2, Scenario) %>% 
   dplyr::filter(str_detect(Scenario, "_forest"))
 
+## Diversidad
 
-for(i in 1:length(Files)){
+Birds <- raster("bird_aoh_10km_richness.tif")
+Mammals <- raster("mammals_aoh_10km_richness.tif")
+
+All <- stack(Birds, Mammals)
+All <- projectRaster(All, crs = "+proj=moll +lon_0=0 +x_0=0 +y_0=0 +ellps=WGS84 +units=m +no_defs")
+
+rm(Birds)
+rm(Mammals)
+
+gc()
+
+for(i in 1:length(Files)){ 
   dir.create("Temp")
   rasterOptions(tmpdir = paste0(getwd(), "/Temp"))
   
@@ -99,6 +111,7 @@ for(i in 1:length(Files)){
   saveRDS(Long_format,Outputs[i])
   gc()
   TotalPoblacional <- resample(Coso, Test)
+  
   Temp <- TotalPoblacional[[1]]
   
   values(Temp) <- NA
@@ -140,14 +153,31 @@ for(i in 1:length(Files)){
     dplyr::select(Forest, Year, Population, ID) %>% 
     mutate_if(is.numeric, as.integer)
   
-  saveRDS(TotalPoblacional_DF, paste0(Folders$Folder2[i], "/",Folders$Scenario, "_TotalPoblacional_Long.rds"))
-  
   saveRDS(All_Data_Long_ID, paste0(Folders$Folder2[i], "/",Folders$Scenario, "_Data_ID.rds"))
 
   
-  saveRDS(ID_Table, paste0(Folders$Folder2[i], "/",Folders$Scenario, "__ID_Table.rds"))
+  saveRDS(ID_Table, paste0(Folders$Folder2[i], "/",Folders$Scenario, "_ID_Table.rds"))
   
   gc()
+  
+  All_Temp <- resample(All, Test)
+  
+  All_Temp_DF <- All_Temp %>% 
+    as("SpatialPixelsDataFrame") %>% 
+    as.data.frame() %>% 
+    right_join(ID_Table) %>% 
+    dplyr::select(-x,-y) %>% 
+    mutate_all(round) %>% 
+    mutate_all(as.integer) %>%
+    rename(Mammals = mammals_aoh_10km_richness, Birds = bird_aoh_10km_richness) %>% 
+    mutate(Vertebrates = Mammals + Birds) %>% 
+    full_join(All_Data_Long_ID) %>% 
+    relocate(ID, .before = where(is.integer)) %>% 
+    arrange(Year, ID) %>% 
+    mutate(Scenario = Folders$Scenario[i])
+  
+  
+  saveRDS(All_Temp_DF, paste0(Folders$Folder2[i], "/",Folders$Scenario, "_Data_Complete_ID.rds"))
   
   print(paste("Scenario", i, "of" ,length(Files), "ready!", Sys.time()))
 }
