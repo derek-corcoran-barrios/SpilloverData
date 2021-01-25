@@ -12,3 +12,7 @@ Fisher’s alpha, Species Richness and Number of individuals.
 ## Population, diversity and forest proportion
 
 This were calculated using the `GeneracionDeDatos.R` script
+
+## Calculation of carrying capacity
+
+Using `CarryingCapacity.R`
