@@ -25,7 +25,7 @@ y <- Data$r
 
 
 set.seed(2021)
-ridge <- cv.glmnet(x, y, alpha = 0, nfolds = 10, lower.limits = -Inf, upper.limits = c(0, Inf, Inf))
+ridge <- cv.glmnet(x, y, alpha = 0, nfolds = 20, lower.limits = -Inf, upper.limits = c(0, Inf, Inf))
 
 DF <- ridge$glmnet.fit$beta %>% as.matrix() %>% t() %>% as.data.frame()
 
@@ -42,7 +42,7 @@ broom::tidy(Mejor_Ridge)
 saveRDS(Mejor_Ridge, "ridge.rds")
 
 set.seed(2020)
-lasso <- cv.glmnet(x, y, alpha = 1, nfolds = 10, lower.limits = -Inf, upper.limits = c(-0.0000001, Inf, Inf))
+lasso <- cv.glmnet(x, y, alpha = 1, nfolds = 10, lower.limits = -Inf, upper.limits = c(0, Inf, Inf))
 
 DF <- lasso$glmnet.fit$beta %>% as.matrix() %>% t() %>% as.data.frame()
 
