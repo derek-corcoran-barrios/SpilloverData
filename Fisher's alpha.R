@@ -38,12 +38,21 @@
   
   saveRDS(Data, "Alroy_Data.rds")
   
+  Data <- readRDS("Alroy_Data.rds") %>% 
+    dplyr::filter(Goods_U > 0.9, count > 100) %>% 
+    mutate(LogS = log(Richness), LogA = log(Fishers_Alpha))
+  
   ggplot(Data, aes(x = Richness, y = Fishers_Alpha)) + 
     geom_point(aes(size = count)) + 
     geom_smooth(method = "lm") +
-    theme_bw() 
+    theme_bw()
   
-  ggplot(Data, aes(x = Richness, y = count)) + 
+  ggplot(Data, aes(x = LogS, y = LogA)) + 
+    geom_point(aes(size = count)) + 
+    geom_smooth(method = "lm") +
+    theme_bw()
+  
+    ggplot(Data, aes(x = Richness, y = count)) + 
     geom_point(aes(size = count)) + 
     geom_smooth(method = "lm") +
     theme_bw() 
@@ -54,4 +63,11 @@
     theme_bw()  +
     scale_y_log10() +
     scale_x_log10()
+  
+  
+  Richness= Fishers_Alpha*ln(1+(count/Fishers_Alpha))
+  
+  N= (e^(S/Fishers_Alpha)-1)*Fishers_Alpha
+
+  powerlaw.model <- nls(Fishers_Alpha~a*Richness^y, start= list(y=0, a = 1), data =Data)
   

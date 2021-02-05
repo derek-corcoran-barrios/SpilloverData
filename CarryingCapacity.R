@@ -1,10 +1,17 @@
 library(tidyverse)
+library(data.table)
 
-Data <- read_rds("All_Data_Long_ID.rds")
+Data <- read_rds("All_Data_Long_ID2.rds") %>% as.data.table()
 
-Data <- Data %>% dplyr::select(ID, Year, Population, Forest)
+Data <- Data[Scenario %chin% c("ppdcam_flat_1000dol_forest_africa", "ppdcam_flat_1000dol_forest_asia", 
+                               "ppdcam_flat_1000dol_forest_latinamerica")] 
 
-Data <- Data %>% arrange(ID, Year) %>% 
+
+gc()
+
+
+Data <- Data %>% as.data.frame() %>% 
+  arrange(ID, Year) %>% 
   group_by(ID) %>% 
   mutate(T_1 = lead(Population))
 
@@ -15,9 +22,33 @@ Data <- Data %>%
   mutate(r = log(T_1/Population)) %>% 
   dplyr::filter(!is.na(r))
 
+Data <- Data %>% dplyr::select(-Scenario)
+
+saveRDS(Data, "ForK.rds")
+
+  library(dplyr)
+  
+    Data <- readRDS("ForK.rds") %>% dplyr::filter(!is.nan(r), r != Inf, r != -Inf)
+      
+    library(MuMIn)
+      
+    Fit <-  lm(r ~ Population*Forest, data = Data)
+    
+coefficients(Fit)
+
+K <- function(Forest){
+  K = (1.930027e-02 - (-5.389763e-08*Forest))/((1 + (-5.389763e-08*Forest))*)
+  return(K)
+}
+summary(Fit)
+
+options(na.action = "na.fail")
+
+dd <- dredge(Fit)
+subset(dd, delta < 4)
 
 
-library(glmnet)
+  library(glmnet)
 x <- model.matrix(r ~ Population*Forest, data = Data)
 x <- x[, -1]
 y <- Data$r
@@ -25,18 +56,19 @@ y <- Data$r
 
 
 set.seed(2021)
-ridge <- cv.glmnet(x, y, alpha = 0, nfolds = 20, lower.limits = -Inf, upper.limits = c(0, Inf, Inf))
+ridge <- cv.glmnet(x, y, alpha = 0, nfolds = 3, lower.limits = -Inf, upper.limits = c(0, Inf, Inf))
 
 DF <- ridge$glmnet.fit$beta %>% as.matrix() %>% t() %>% as.data.frame()
 
-DF$Lambda <- ridge$glmnet.fit$lambda
+  DF$Lambda <- ridge$glmnet.fit$lambda
 
 DF <- DF %>% pivot_longer(-Lambda, names_to = "Parametro", values_to = "Estimador")
 
 ggplot(DF, aes(x = Lambda, y = Estimador, color = Parametro)) + geom_path() + geom_vline(xintercept = ridge$lambda.min, color = "red", lty = 2) + theme_bw() 
 
 
-Mejor_Ridge <- glmnet(x, y, alpha = 0, lambda = ridge$lambda.min, lower.limits = -Inf, upper.limits = c(0, Inf, Inf))
+Mejor_Ridge <- glmnet(x, y, alpha = 0, #lambda = ridge$lambda.min, 
+                      lower.limits = -Inf, upper.limits = c(0, Inf, Inf))
 
 broom::tidy(Mejor_Ridge)
 saveRDS(Mejor_Ridge, "ridge.rds")
