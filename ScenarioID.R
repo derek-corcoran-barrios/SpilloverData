@@ -13,9 +13,9 @@ DF <- tibble(Scenario = Data) %>%
                              str_detect(Scenario, "ppdcam_flat_1000dol_") ~ 5,
                              str_detect(Scenario, "ppdcam_flat_5000dol_") ~ 6))
 
-saveRDS(DF, "Scenario_ID.rds")
+#saveRDS(DF, "Scenario_ID.rds")
 
-gc()
+#gc()
 
 library(data.table)
 
@@ -29,19 +29,15 @@ Data <- as.data.table(readRDS("All_Data_Long_ID2.rds"))
 
 
 
-NewData <- list()
+NewData <- data.table::merge.data.table(x = Data, y = DF, 
+                                        by.x = "Scenario", by.y = "Scenario", 
+                                        all.x = TRUE, all.y = FALSE)
 
-for(i in 1:nrow(DF)){
-  Temp <- Data[Scenario == DF$Scenario[i]]
-  Temp <- data.table::merge.data.table(x = Temp, y = DF, 
-                                       by.x = "Scenario", by.y = "Scenario", 
-                                       all.x = TRUE, all.y = FALSE)
-  Temp <- Temp[,Scenario:=NULL]
-  NewData[[i]] <- Temp
-  Data <- Data[!(Scenario %chin% DF$Scenario[1:i])]
-  rm(Temp)
-  gc()
-  saveRDS(NewData, "All_Data_Long_ID3.rds")
-  message(paste(i, "of", nrow(DF)))
-}
+NewData <- NewData %>% as.data.frame() %>% dplyr::select(-Scenario)
 
+NewData <- NewData %>% mutate_if(is.numeric, as.integer)
+
+saveRDS(NewData, "All_Data_Long_ID3.rds")
+
+
+NewData <- NewData %>% mutate(K = )
