@@ -39,5 +39,11 @@ NewData <- NewData %>% mutate_if(is.numeric, as.integer)
 
 saveRDS(NewData, "All_Data_Long_ID3.rds")
 
+Fit <- readRDS("ModelCarryingK.rds")
 
-NewData <- NewData %>% mutate(K = )
+Coefficients <- coefficients(Fit)
+
+NewData <- NewData %>% mutate(K = (-Coefficients[1] - Coefficients[3]*Forest)/(Coefficients[2] + Coefficients[4]*Forest),
+                              K = as.integer(round(K)))
+
+saveRDS(NewData, "All_Data_Long_ID3.rds")
