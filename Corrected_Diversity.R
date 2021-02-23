@@ -26,7 +26,17 @@ colnames(Bird_Rich_ID)[4] <- "Bird_Richness"
 
 saveRDS(Bird_Rich_ID, "Bird_Rich_Temp.rds")
 
-All_Rich_ID <- full_join(Bird_Rich_ID, Mammal_Rich_ID)
+Richness_Bats <- readRDS("Bats_Equal.rds")
+
+Bats_Rich_ID <- raster::extract(Richness_Bats, All_Data_Long_ID[,-1]) %>% as.data.frame() 
+
+Bats_Rich_ID <- bind_cols(All_Data_Long_ID, Bats_Rich_ID)
+
+colnames(Bats_Rich_ID)[4] <- "Bats_Richness"
+
+saveRDS(Bats_Rich_ID, "Bats_Rich_Temp.rds")
+
+All_Rich_ID <- list(Bird_Rich_ID, Mammal_Rich_ID, Bats_Rich_ID) %>% reduce(full_join)
 saveRDS(All_Rich_ID, "All_Rich_Temp.rds")
 library(dplyr)
 All_Data_Long_ID <- readRDS("All_Data_Long_ID.rds") %>% dplyr::select(-Birds, -Mammals, -Vertebrates)
