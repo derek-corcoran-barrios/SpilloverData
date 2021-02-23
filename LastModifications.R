@@ -2,7 +2,7 @@ library(tidyverse)
 
 Imputed <- readRDS("Imputed.rds")
 
-Imputed <- Imputed %>% mutate(I_c = N*0.08)
+Imputed <- Imputed %>% mutate(I_c = N*0.08, I_c_Bats = N_bats*0.08)
 
 saveRDS(Imputed, "Imputed.rds")
 

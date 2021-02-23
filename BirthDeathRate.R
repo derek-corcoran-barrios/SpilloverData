@@ -14,7 +14,7 @@ World <- countriesHigh %>%
   st_crop(extent(Mold)) %>% 
   rename(code = ISO3) %>% 
   mutate(code = as.character(code), code = ifelse(code == "SDS", "SSD", code)) %>% 
-  select(code)
+  dplyr::select(code)
 
 rm(countriesHigh)
 
@@ -66,15 +66,27 @@ imputed <- bake(ratio_recipe2, One_Time)
 
 saveRDS(imputed, "Imputed.rds")
 
-imputed <- imputed %>% dplyr::select(-ip.Death, -x, -y)
+imputed <- imputed %>% dplyr::select(-x, -y)
 
 imputed <- imputed %>% relocate(Bird_Richness, .before = "Birth")
 saveRDS(imputed, "Imputed.rds")
 
 imputed <- imputed %>% mutate(Richness = Bird_Richness + Mammal_Richness)
 
+powerlaw.model <- readRDS("powerlaw_model.rds")
+
 imputed$Alpha <- predict(powerlaw.model, newdata = imputed)
 
 imputed <- imputed %>% mutate(N = ((exp(Richness/Alpha))-1)*Alpha, N = ifelse(is.nan(N), 0, N))
+
+Model_Bats <- readRDS("modelo RA bats_v1.rds")
+
+imputed$log_x <- log(imputed$Bats_Richness)
+
+imputed$N_bats <- exp(imputed$log_x*coefficients(Model_Bats)[2] + coefficients(Model_Bats)[1])
+
+imputed <- imputed %>% dplyr::select("ID", "Mammal_Richness", "Bats_Richness", "Bird_Richness", 
+                                     "Birth", "Death", "Richness","N", 
+                                     "N_bats")
 
 saveRDS(imputed, "Imputed.rds")
