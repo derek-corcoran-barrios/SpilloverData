@@ -70,4 +70,5 @@
   N= (e^(S/Fishers_Alpha)-1)*Fishers_Alpha
 
   powerlaw.model <- nls(Fishers_Alpha~a*Richness^y, start= list(y=0, a = 1), data =Data)
+  saveRDS(powerlaw.model, "powerlaw_model.rds")
   
