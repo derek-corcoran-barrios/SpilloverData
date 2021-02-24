@@ -43,6 +43,7 @@ NewData <- NewData %>% mutate_if(is.numeric, as.integer)
 saveRDS(NewData, "All_Data_Long_ID3.rds")
 
 Fit <- readRDS("ModelCarryingK.rds")
+NewData <- readRDS("All_Data_Long_ID3.rds")
 
 Coefficients <- coefficients(Fit)
 
