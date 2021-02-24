@@ -11,9 +11,12 @@ DF <- tibble(Scenario = Data) %>%
                              str_detect(Scenario, "flat_5000d_") ~ 3,
                              str_detect(Scenario, "ppdcam_0dol_") ~ 4,
                              str_detect(Scenario, "ppdcam_flat_1000dol_") ~ 5,
-                             str_detect(Scenario, "ppdcam_flat_5000dol_") ~ 6))
+                             str_detect(Scenario, "ppdcam_flat_5000dol_") ~ 6,
+                             str_detect(Scenario, "ppdcam_discont_0dol") ~ 7,
+                             str_detect(Scenario, "ppdcam_discont_flat_1000dol") ~ 8,
+                             str_detect(Scenario, "ppdcam_discont_flat_5000dol") ~ 9))
 
-#saveRDS(DF, "Scenario_ID.rds")
+saveRDS(DF, "Scenario_ID.rds")
 
 #gc()
 
